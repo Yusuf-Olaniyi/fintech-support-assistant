@@ -1,0 +1,5 @@
+.env
+chat_log.jsonl
+__pycache__/
+venv/
+.venv/
