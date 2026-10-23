@@ -30,7 +30,7 @@ knowledge = (BASE_DIR / "knowledge.md").read_text(encoding="utf-8")
 prompt_template = (BASE_DIR / "system_prompt.txt").read_text(encoding="utf-8")
 SYSTEM_PROMPT = prompt_template.replace("__KNOWLEDGE__", knowledge)
 
-# Limits (protect the free Groq quota and the server's memory) 
+# ---- Limits (protect the free Groq quota and the server's memory) ----
 MAX_SESSIONS = 500          # keep at most this many conversations in memory
 VISITOR_LIMIT = 20          # messages allowed per visitor...
 VISITOR_WINDOW = 600        # ...in this many seconds (10 minutes)
@@ -46,7 +46,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
 
 
-# ---------------------------------------------------------------- logging
+# logging
 def log_event(session_id, handed_off, error=None):
     record = {
         "time": datetime.now(timezone.utc).isoformat(),
@@ -62,7 +62,7 @@ def log_event(session_id, handed_off, error=None):
         print("Logging failed:", repr(e))
 
 
-# ------------------------------------------------------------ rate limits
+# rate limits
 def client_ip(request: Request) -> str:
     # Behind Render's proxy, the real visitor address is in X-Forwarded-For.
     forwarded = request.headers.get("x-forwarded-for")
@@ -92,7 +92,7 @@ def check_limits(ip: str):
     return None
 
 
-# ------------------------------------------------------------------ stats
+# stats
 def compute_stats():
     total = 0
     errors = 0
@@ -236,7 +236,7 @@ def stats():
     return STATS_TEMPLATE.replace("__CARDS__", cards).replace("__ERRORS__", errors_html)
 
 
-# ----------------------------------------------------------------- routes
+# routes
 @app.get("/")
 def home():
     return FileResponse(BASE_DIR / "index.html")
