@@ -25,10 +25,6 @@ first-line support safely.
 
 ## Screenshots
 
-
-Add your screenshots to a folder called "screenshots", then remove the comment
-markers around the lines below.
-
 ![Chat page](screenshots/chat.png)
 ![Statistics page](screenshots/stats.png)
 
