@@ -46,7 +46,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
 
 
-# logging
+# ---------------------------------------------------------------- logging
 def log_event(session_id, handed_off, error=None):
     record = {
         "time": datetime.now(timezone.utc).isoformat(),
@@ -58,12 +58,13 @@ def log_event(session_id, handed_off, error=None):
         with open(LOG_PATH, "a", encoding="utf-8") as f:
             f.write(json.dumps(record) + "\n")
     except OSError as e:
+        # A logging problem must never break the customer's chat.
         print("Logging failed:", repr(e))
 
 
-# rate limits
+# ------------------------------------------------------------ rate limits
 def client_ip(request: Request) -> str:
-    # Render's proxy - the real visitor address is in X-Forwarded-For.
+    # Behind Render's proxy, the real visitor address is in X-Forwarded-For.
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
@@ -91,7 +92,7 @@ def check_limits(ip: str):
     return None
 
 
-# stats
+# ------------------------------------------------------------------ stats
 def compute_stats():
     total = 0
     errors = 0
@@ -144,27 +145,59 @@ STATS_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Ujana Send demo: statistics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 680px; margin: 2rem auto;
-         padding: 0 1rem; color: #1a1a1a; }
-  .note { background: #fff8e1; border: 1px solid #f0d78c; padding: .6rem .8rem;
-          border-radius: 8px; font-size: .9rem; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: .75rem; margin: 1.25rem 0; }
-  .card { border: 1px solid #ddd; border-radius: 10px; padding: .9rem; }
-  .value { font-size: 1.8rem; font-weight: 600; }
-  .label { color: #555; font-size: .9rem; }
+  :root { --paper: #F2F5F3; --surface: #FFFFFF; --ink: #0F2E33; --muted: #5A6B68;
+          --line: #D5DEDA; --teal: #12525A; --accent-text: #12525A; --sun: #FFB43A; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #0B1A1D; --surface: #12272B; --ink: #E8F0EE; --muted: #9DB2AE;
+            --line: #264245; --teal: #1D7580; --accent-text: #8FD3DB; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); line-height: 1.5;
+         font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .page { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  .brand { display: flex; align-items: center; gap: .75rem; }
+  .mark { position: relative; width: 34px; height: 34px; border-radius: 50%;
+          background: var(--teal); flex: none; }
+  .mark::after { content: ""; position: absolute; width: 10px; height: 10px;
+                 border-radius: 50%; background: var(--sun); right: 6px; top: 6px; }
+  h1 { margin: 0; font-size: 1.3rem; letter-spacing: -0.01em; line-height: 1.15; }
+  .sub { margin: 0; color: var(--muted); font-size: .9rem; }
+  .note { margin: 1.5rem 0 0; padding: .15rem 0 .15rem .75rem;
+          border-left: 3px solid var(--sun); color: var(--muted); font-size: .9rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1.75rem 1.5rem; margin: 2rem 0; }
+  .card { border-top: 2px solid var(--teal); padding-top: .6rem; }
+  .value { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  .label { color: var(--muted); font-size: .92rem; margin-top: .15rem; }
+  h2 { font-size: 1.05rem; margin: 2rem 0 .5rem; }
   table { border-collapse: collapse; width: 100%; }
-  td, th { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #eee; }
+  td, th { text-align: left; padding: .5rem .25rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; font-size: .9rem; }
+  a { color: var(--accent-text); }
+  a:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
 </style>
 </head>
 <body>
-<h1>Support bot statistics</h1>
-<p class="note">Fictional demo company. These numbers cover activity since the
-demo last restarted. No message text is stored.</p>
-<div class="grid">__CARDS__</div>
-__ERRORS__
+<div class="page">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <div>
+      <h1>Ujana Send</h1>
+      <p class="sub">Support assistant statistics</p>
+    </div>
+  </div>
+  <p class="note">Fictional demo company. These numbers cover activity since the
+  demo last restarted. No message text is stored.</p>
+  <div class="grid">__CARDS__</div>
+  __ERRORS__
+  <p><a href="/">Back to the chat</a></p>
+</div>
 </body>
 </html>"""
 
@@ -203,7 +236,7 @@ def stats():
     return STATS_TEMPLATE.replace("__CARDS__", cards).replace("__ERRORS__", errors_html)
 
 
-# routes
+# ----------------------------------------------------------------- routes
 @app.get("/")
 def home():
     return FileResponse(BASE_DIR / "index.html")

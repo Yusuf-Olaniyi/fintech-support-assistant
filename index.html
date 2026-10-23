@@ -3,60 +3,301 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>Ujana Send Support (demo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 1.5rem auto;
-           padding: 0 1rem; color: #1a1a1a; }
-    .notice { background: #fff8e1; border: 1px solid #f0d78c; padding: .6rem .8rem;
-              border-radius: 8px; font-size: .9rem; }
-    #log { margin: 1rem 0; min-height: 260px; }
-    .msg { padding: .5rem .75rem; border-radius: 10px; margin: .4rem 0;
-           max-width: 85%; white-space: pre-wrap; }
-    .user { background: #e8f0fe; margin-left: auto; }
-    .bot { background: #f1f3f4; }
-    .row { display: flex; gap: .5rem; }
-    #box { flex: 1; padding: .6rem; font-size: 1rem; }
-    button { padding: .6rem 1rem; font-size: 1rem; }
-    footer { margin-top: 1.5rem; font-size: .85rem; color: #555; }
+    :root {
+      --paper: #F2F5F3;
+      --surface: #FFFFFF;
+      --ink: #0F2E33;
+      --muted: #5A6B68;
+      --line: #D5DEDA;
+      --teal: #12525A;
+      --accent-text: #12525A;
+      --sun: #FFB43A;
+      --on-sun: #0F2E33;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #0B1A1D;
+        --surface: #12272B;
+        --ink: #E8F0EE;
+        --muted: #9DB2AE;
+        --line: #264245;
+        --teal: #1D7580;
+        --accent-text: #8FD3DB;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .app {
+      max-width: 720px;
+      height: 100vh;
+      height: 100dvh;
+      margin: 0 auto;
+      padding: 1rem 1rem .75rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---------- Header ---------- */
+    .brand { display: flex; align-items: center; gap: .75rem; }
+    .mark {
+      position: relative;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--teal);
+      flex: none;
+    }
+    .mark::after {
+      content: "";
+      position: absolute;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--sun);
+      right: 6px; top: 6px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+    }
+    .brand p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+    /* The route line: a dot travels along it while the assistant replies */
+    .route {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      margin: 1.1rem 4px .9rem;
+    }
+    .route::before {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; top: 4px;
+      height: 2px;
+      background: var(--line);
+    }
+    .node {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .3rem;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+    .node i {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--paper);
+      border: 2px solid var(--teal);
+    }
+    .traveler {
+      position: absolute;
+      top: 0; left: 0;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--sun);
+      opacity: 0;
+    }
+    body.thinking .traveler { animation: travel 2.2s ease-in-out infinite; }
+    @keyframes travel {
+      0%   { left: 0; opacity: 0; }
+      12%  { opacity: 1; }
+      88%  { opacity: 1; }
+      100% { left: calc(100% - 10px); opacity: 0; }
+    }
+
+    .notice {
+      margin: 0 0 .5rem;
+      padding: .15rem 0 .15rem .75rem;
+      border-left: 3px solid var(--sun);
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    /* ---------- Conversation ---------- */
+    #log {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      padding: .75rem 0;
+    }
+    .msg {
+      margin: 0;
+      max-width: 85%;
+      padding: .65rem .9rem;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 4px 16px 16px 16px;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--teal);
+      color: #FFFFFF;
+      border-radius: 16px 4px 16px 16px;
+    }
+
+    /* ---------- Suggestions ---------- */
+    .chips { display: flex; flex-wrap: wrap; gap: .5rem; padding: .25rem 0 .75rem; }
+    .chip {
+      font: inherit;
+      font-size: .92rem;
+      color: var(--accent-text);
+      background: transparent;
+      border: 1px solid var(--accent-text);
+      border-radius: 999px;
+      padding: .4rem .85rem;
+      cursor: pointer;
+    }
+    .chip:hover { background: var(--surface); }
+
+    /* ---------- Composer ---------- */
+    .composer { display: flex; gap: .5rem; }
+    .composer input {
+      flex: 1;
+      min-width: 0;
+      font: inherit;
+      font-size: 1rem;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: .8rem 1rem;
+    }
+    .composer input::placeholder { color: var(--muted); }
+    .composer button {
+      font: inherit;
+      font-weight: 700;
+      color: var(--on-sun);
+      background: var(--sun);
+      border: 0;
+      border-radius: 12px;
+      padding: 0 1.4rem;
+      cursor: pointer;
+    }
+    .composer button:disabled { opacity: .55; cursor: default; }
+
+    .composer input:focus-visible,
+    .composer button:focus-visible,
+    .chip:focus-visible,
+    footer a:focus-visible {
+      outline: 2px solid var(--accent-text);
+      outline-offset: 2px;
+    }
+
+    .status { min-height: 1.2rem; margin: .4rem 0 0; font-size: .85rem; color: var(--muted); }
+    footer { font-size: .85rem; }
+    footer a { color: var(--accent-text); }
+
+    .sr {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body.thinking .traveler { animation: none; opacity: 1; left: 0; }
+    }
   </style>
 </head>
 <body>
-  <h1>Ujana Send Support</h1>
-  <p class="notice">
-    Demo only: Ujana Send is a fictional company, and this assistant can't
-    see accounts or transfers. Please don't enter real personal or financial details.
-  </p>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <h1>Ujana Send</h1>
+          <p>Support assistant</p>
+        </div>
+      </div>
+      <div class="route" aria-hidden="true">
+        <span class="traveler"></span>
+        <div class="node"><i></i>Request</div>
+        <div class="node"><i></i>Processing</div>
+        <div class="node"><i></i>Response</div>
+    </header>
 
-  <div id="log"></div>
+    <p class="notice">
+      Demo only. Ujana Send is a fictional company, and this assistant can't see
+      accounts or transfers. Please don't enter real personal or financial details.
+    </p>
 
-  <div class="row">
-    <input id="box" placeholder="Type your question..." maxlength="2000" autocomplete="off">
-    <button id="sendBtn">Send</button>
+    <main id="log" role="log" aria-live="polite" aria-label="Conversation"></main>
+
+    <div id="chips" class="chips">
+      <button type="button" class="chip" data-text="Where is my transfer?">Where is my transfer?</button>
+      <button type="button" class="chip" data-text="What does it cost to send money?">What does it cost to send money?</button>
+      <button type="button" class="chip" data-text="How do I verify my account?">How do I verify my account?</button>
+      <button type="button" class="chip" data-text="What's my daily limit?">What's my daily limit?</button>
+    </div>
+
+    <form id="composer" class="composer" autocomplete="off">
+      <label class="sr" for="box">Your message</label>
+      <input id="box" placeholder="Ask about a transfer, fees or limits" maxlength="2000">
+      <button id="sendBtn" type="submit">Send</button>
+    </form>
+    <p id="status" class="status" aria-live="polite"></p>
+
+    <footer><a href="/stats">Demo statistics</a></footer>
   </div>
-
-  <footer><a href="/stats">View demo statistics</a></footer>
 
   <script>
     let sessionId = localStorage.getItem("session_id");
+    let busy = false;
 
     const log = document.getElementById("log");
     const box = document.getElementById("box");
     const button = document.getElementById("sendBtn");
+    const form = document.getElementById("composer");
+    const chips = document.getElementById("chips");
+    const statusEl = document.getElementById("status");
 
     function addLine(kind, text) {
       const p = document.createElement("p");
       p.className = "msg " + kind;
       p.textContent = text;
       log.appendChild(p);
-      p.scrollIntoView({ block: "end" });
+      log.scrollTop = log.scrollHeight;
     }
 
-    async function send() {
-      const text = box.value.trim();
-      if (!text) return;
-      box.value = "";
+    function setBusy(value) {
+      busy = value;
+      document.body.classList.toggle("thinking", value);
+      button.disabled = value;
+      statusEl.textContent = value ? "Ujana is replying..." : "";
+    }
+
+    async function sendText(text) {
+      if (busy) return;
+      if (chips.isConnected) chips.remove();
       addLine("user", text);
-      button.disabled = true;
+      setBusy(true);
 
       try {
         const res = await fetch("/chat", {
@@ -75,7 +316,7 @@
           } else if (typeof data.detail === "string") {
             addLine("bot", data.detail);
           } else {
-            addLine("bot", "Sorry, I couldn't read that message. Please try rewording it.");
+            addLine("bot", "I couldn't read that message. Please try rewording it.");
           }
           return;
         }
@@ -84,16 +325,24 @@
         localStorage.setItem("session_id", sessionId);
         addLine("bot", data.reply);
       } catch (err) {
-        addLine("bot", "I couldn't reach the server. Please check your connection and try again.");
+        addLine("bot", "I couldn't reach the server. Check your connection and try again.");
       } finally {
-        button.disabled = false;
+        setBusy(false);
         box.focus();
       }
     }
 
-    button.addEventListener("click", send);
-    box.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") send();
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = box.value.trim();
+      if (!text) return;
+      box.value = "";
+      sendText(text);
+    });
+
+    chips.addEventListener("click", (e) => {
+      const chip = e.target.closest("button");
+      if (chip) sendText(chip.dataset.text);
     });
 
     addLine("bot", "Hi, I'm Ujana, the support assistant for Ujana Send. I can help with fees, limits, transfer times, verification and failed transfers. What can I help you with today?");
